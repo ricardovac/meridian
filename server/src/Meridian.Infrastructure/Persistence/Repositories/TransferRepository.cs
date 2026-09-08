@@ -29,5 +29,26 @@ public sealed class TransferRepository : ITransferRepository
         return (items, total);
     }
 
+    public async Task<(IReadOnlyList<Transfer> Items, int Total)> GetPageByOwnerAsync(
+        Guid ownerUserId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var ownedAccountIds = _context.Accounts
+            .Where(a => a.OwnerUserId == ownerUserId)
+            .Select(a => a.Id);
+
+        var query = _context.Transfers.Where(
+            t => ownedAccountIds.Contains(t.SourceAccountId) || ownedAccountIds.Contains(t.DestinationAccountId));
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(t => t.CreatedAt)
+            .ThenByDescending(t => t.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
+    }
+
     public void Add(Transfer transfer) => _context.Transfers.Add(transfer);
 }

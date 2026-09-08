@@ -12,7 +12,7 @@ public interface ITransferService
         string? description, CancellationToken cancellationToken = default);
     Task<TransferDto> GetAsync(Guid userId, Guid transferId, CancellationToken cancellationToken = default);
     Task<PagedResult<TransferDto>> ListAsync(
-        Guid userId, Guid accountId, int? page, int? pageSize, CancellationToken cancellationToken = default);
+        Guid userId, Guid? accountId, int? page, int? pageSize, CancellationToken cancellationToken = default);
 }
 
 public sealed class TransferService : ITransferService
@@ -82,14 +82,24 @@ public sealed class TransferService : ITransferService
     }
 
     public async Task<PagedResult<TransferDto>> ListAsync(
-        Guid userId, Guid accountId, int? page, int? pageSize, CancellationToken cancellationToken = default)
+        Guid userId, Guid? accountId, int? page, int? pageSize, CancellationToken cancellationToken = default)
     {
-        var account = await _accounts.GetAsync(accountId, cancellationToken);
+        var (normalizedPage, normalizedSize) = Paging.Normalize(page, pageSize);
+
+        if (accountId is null)
+        {
+            var (allItems, allTotal) = await _transfers.GetPageByOwnerAsync(
+                userId, normalizedPage, normalizedSize, cancellationToken);
+            return new PagedResult<TransferDto>(
+                allItems.Select(TransferDto.From).ToList(), allTotal, normalizedPage, normalizedSize);
+        }
+
+        var account = await _accounts.GetAsync(accountId.Value, cancellationToken);
         if (account is null || account.OwnerUserId != userId)
             throw new NotFoundException("Account not found.");
 
-        var (normalizedPage, normalizedSize) = Paging.Normalize(page, pageSize);
-        var (items, total) = await _transfers.GetPageAsync(accountId, normalizedPage, normalizedSize, cancellationToken);
+        var (items, total) = await _transfers.GetPageAsync(
+            accountId.Value, normalizedPage, normalizedSize, cancellationToken);
         return new PagedResult<TransferDto>(
             items.Select(TransferDto.From).ToList(), total, normalizedPage, normalizedSize);
     }

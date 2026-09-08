@@ -28,6 +28,8 @@ public interface ITransferRepository
     Task<Transfer?> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Transfer> Items, int Total)> GetPageAsync(
         Guid accountId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Transfer> Items, int Total)> GetPageByOwnerAsync(
+        Guid ownerUserId, int page, int pageSize, CancellationToken cancellationToken = default);
     void Add(Transfer transfer);
 }
 
