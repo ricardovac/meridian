@@ -22,7 +22,7 @@ Padrões centrais do domínio (não são detalhes de implementação — são o 
 dotnet build
 dotnet test                                                    # SQLite in-memory, sem infra
 dotnet run --project src/Meridian.Api                          # Postgres (docker compose up postgres rabbitmq -d)
-Database__Provider=Sqlite dotnet run --project src/Meridian.Api --no-launch-profile   # sem docker
+ASPNETCORE_ENVIRONMENT=Development Database__Provider=Sqlite dotnet run --project src/Meridian.Api --no-launch-profile   # sem docker
 
 # Frontend (de web/)
 npm start                # ng serve com proxy /api → http://localhost:5080
@@ -137,6 +137,18 @@ tests/Meridian.Tests/          → Domain/, Application/, Infrastructure/, Api/
 - SQLite (testes) usa `EnsureCreated` — migration nova precisa manter o model compatível
   com os dois providers (nada de SQL raw Postgres-only no model; se inevitável, isolar
   por provider).
+
+### SQLite (`Database:Provider=Sqlite`)
+
+Existe para os testes automatizados (`dotnet test`) e para demo local single-user —
+**não é um substituto do Postgres para múltiplos usuários concorrentes em produção**.
+Cada `MeridianDbContext` abre sua própria `SqliteConnection` contra um banco em memória
+nomeado (`Mode=Memory;Cache=Shared`), mantido vivo pela duração do processo por uma
+conexão singleton dedicada que nunca executa query (só existe pra segurar o banco aberto).
+Isso evita compartilhar uma única conexão ADO.NET entre requests concorrentes (não é
+thread-safe), mas o isolamento entre transações concorrentes ainda é o que o SQLite
+shared-cache oferece — mais fraco que o MVCC do Postgres. Para mais de um usuário
+simultâneo real, use Postgres (`Database:Provider=Postgres`, padrão de `dotnet run`).
 
 ### Estilo C#
 
