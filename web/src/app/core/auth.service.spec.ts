@@ -2,9 +2,20 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { AccountsService } from './accounts.service';
 import { AuthService } from './auth.service';
+import { Account } from './models';
 
 const TOKEN_STORAGE_KEY = 'meridian.token';
+
+const OTHER_USER_ACCOUNT: Account = {
+  id: 'account-of-user-a',
+  name: 'Conta do usuário A',
+  currency: 'BRL',
+  balance: 1000,
+  isSystem: false,
+  createdAt: '2026-01-15T12:00:00Z',
+};
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (value: Record<string, unknown>): string =>
@@ -75,5 +86,53 @@ describe('AuthService', () => {
     expect(service.token()).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
     expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
+  });
+
+  it('clears the in-memory accounts on logout', () => {
+    const service = TestBed.inject(AuthService);
+    const accountsService = TestBed.inject(AccountsService);
+    const httpMock = TestBed.inject(HttpTestingController);
+    accountsService.refresh();
+    httpMock.expectOne('/api/accounts').flush([OTHER_USER_ACCOUNT]);
+    expect(accountsService.accounts()).toHaveLength(1);
+
+    service.logout();
+
+    expect(accountsService.accounts()).toEqual([]);
+    httpMock.verify();
+  });
+
+  it('clears the previous session accounts when another user logs in', () => {
+    const service = TestBed.inject(AuthService);
+    const accountsService = TestBed.inject(AccountsService);
+    const httpMock = TestBed.inject(HttpTestingController);
+    accountsService.refresh();
+    httpMock.expectOne('/api/accounts').flush([OTHER_USER_ACCOUNT]);
+    expect(accountsService.accounts()).toHaveLength(1);
+
+    service.login({ email: 'user-b@meridian.dev', password: 'secret-123' }).subscribe();
+    httpMock.expectOne('/api/auth/login').flush({
+      token: fakeJwt({ exp: Math.floor(Date.now() / 1000) + 3600, email: 'user-b@meridian.dev' }),
+    });
+
+    expect(accountsService.accounts()).toEqual([]);
+    httpMock.verify();
+  });
+
+  it('clears the previous session accounts when another user registers', () => {
+    const service = TestBed.inject(AuthService);
+    const accountsService = TestBed.inject(AccountsService);
+    const httpMock = TestBed.inject(HttpTestingController);
+    accountsService.refresh();
+    httpMock.expectOne('/api/accounts').flush([OTHER_USER_ACCOUNT]);
+    expect(accountsService.accounts()).toHaveLength(1);
+
+    service.register({ email: 'user-c@meridian.dev', password: 'secret-123' }).subscribe();
+    httpMock.expectOne('/api/auth/register').flush({
+      token: fakeJwt({ exp: Math.floor(Date.now() / 1000) + 3600, email: 'user-c@meridian.dev' }),
+    });
+
+    expect(accountsService.accounts()).toEqual([]);
+    httpMock.verify();
   });
 });
