@@ -1,4 +1,5 @@
 using Meridian.Application.Abstractions;
+using Meridian.Application.Common;
 using Meridian.Application.Dtos;
 using Meridian.Application.Exceptions;
 using Meridian.Domain.Entities;
@@ -51,29 +52,36 @@ public sealed class AuthService : IAuthService
         _clock = clock;
     }
 
-    public async Task<AuthResult> RegisterAsync(string email, string password, CancellationToken cancellationToken = default)
+    public Task<AuthResult> RegisterAsync(string email, string password, CancellationToken cancellationToken = default)
     {
-        if (await _users.GetByEmailAsync(email, cancellationToken) is not null)
-            throw new ConflictException("Email is already registered.");
+        return ConcurrencyRetry.ExecuteAsync(
+            async () =>
+            {
+                if (await _users.GetByEmailAsync(email, cancellationToken) is not null)
+                    throw new ConflictException("Email is already registered.");
 
-        var now = _clock.UtcNow;
-        var user = User.Create(email, _passwordHasher.Hash(password), now);
-        _users.Add(user);
+                var systemAccount = await _systemAccounts.GetOrCreateAsync(DefaultCurrency, cancellationToken);
 
-        var mainAccount = Account.CreateForUser(user.Id, "Main", DefaultCurrency, now);
-        _accounts.Add(mainAccount);
+                var now = _clock.UtcNow;
+                var user = User.Create(email, _passwordHasher.Hash(password), now);
+                _users.Add(user);
 
-        var systemAccount = await _systemAccounts.GetOrCreateAsync(DefaultCurrency, cancellationToken);
-        var result = Domain.Entities.Transfer.Execute(
-            systemAccount, mainAccount, OpeningBalance, "Opening balance", now);
+                var mainAccount = Account.CreateForUser(user.Id, "Main", DefaultCurrency, now);
+                _accounts.Add(mainAccount);
 
-        _transfers.Add(result.Transfer);
-        _ledger.AddRange(new[] { result.DebitEntry, result.CreditEntry });
-        OutboxWriter.Enqueue(_outbox, result.Event);
+                var result = Domain.Entities.Transfer.Execute(
+                    systemAccount, mainAccount, OpeningBalance, "Opening balance", now);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                _transfers.Add(result.Transfer);
+                _ledger.AddRange(new[] { result.DebitEntry, result.CreditEntry });
+                OutboxWriter.Enqueue(_outbox, result.Event);
 
-        return new AuthResult(_tokenService.CreateToken(user));
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return new AuthResult(_tokenService.CreateToken(user));
+            },
+            onConflict: _unitOfWork.ClearTracking,
+            maxAttempts: SystemAccountProvider.ContentionMaxAttempts);
     }
 
     public async Task<AuthResult> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
