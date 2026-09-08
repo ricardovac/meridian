@@ -51,4 +51,10 @@ export class AccountsService {
     const params = new HttpParams().set('page', page).set('pageSize', pageSize);
     return this.http.get<Paged<LedgerEntry>>(`${ACCOUNTS_URL}/${accountId}/entries`, { params });
   }
+
+  /** Clears the in-memory account state; call on logout so the next session starts clean. */
+  reset(): void {
+    this.accountsSignal.set([]);
+    this.loadingSignal.set(false);
+  }
 }
