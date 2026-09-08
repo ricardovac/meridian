@@ -40,6 +40,8 @@ public sealed class ExceptionHandlingMiddleware
             StatusCodes.Status422UnprocessableEntity, "insufficient-funds", "Insufficient funds", ex.Message),
         CurrencyMismatchException ex => Problem(
             StatusCodes.Status422UnprocessableEntity, "currency-mismatch", "Currency mismatch", ex.Message),
+        InvalidAmountScaleException ex => Problem(
+            StatusCodes.Status422UnprocessableEntity, "invalid-amount-scale", "Invalid amount scale", ex.Message),
         DomainValidationException ex => Problem(
             StatusCodes.Status400BadRequest, "validation-error", "Validation failed", ex.Message),
         RequestValidationException ex => Problem(

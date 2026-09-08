@@ -92,7 +92,8 @@ public sealed class AccountService : IAccountService
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 return TransferDto.From(result.Transfer);
             },
-            onConflict: _unitOfWork.ClearTracking);
+            onConflict: _unitOfWork.ClearTracking,
+            maxAttempts: SystemAccountProvider.ContentionMaxAttempts);
     }
 
     private async Task<Account> GetOwnedAccountAsync(Guid userId, Guid accountId, CancellationToken cancellationToken)

@@ -1,7 +1,9 @@
 using Meridian.Application.Abstractions;
 using Meridian.Application.Exceptions;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Npgsql;
 
 namespace Meridian.Infrastructure.Persistence;
 
@@ -21,7 +23,18 @@ public sealed class EfUnitOfWork : IUnitOfWork
         {
             throw new ConcurrencyConflictException(ex);
         }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            throw new ConflictException("A record with the same unique key already exists.", ex);
+        }
     }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex) => ex.InnerException switch
+    {
+        PostgresException postgres => postgres.SqlState == PostgresErrorCodes.UniqueViolation,
+        SqliteException sqlite => sqlite.SqliteExtendedErrorCode is 2067 or 1555,
+        _ => false,
+    };
 
     public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {

@@ -24,6 +24,8 @@ builder.Services.AddSingleton<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IdempotencyFilter>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+jwtOptions.EnsureConfiguredFor(builder.Environment.IsDevelopment());
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -94,7 +96,10 @@ app.MapControllers();
 app.MapGet("/health", async (MeridianDbContext context, CancellationToken cancellationToken) =>
 {
     var databaseUp = await context.Database.CanConnectAsync(cancellationToken);
-    return Results.Ok(new { status = "healthy", database = databaseUp ? "connected" : "unavailable" });
+    var payload = new { status = databaseUp ? "healthy" : "degraded", database = databaseUp ? "connected" : "unavailable" };
+    return databaseUp
+        ? Results.Ok(payload)
+        : Results.Json(payload, statusCode: StatusCodes.Status503ServiceUnavailable);
 });
 
 app.Run();

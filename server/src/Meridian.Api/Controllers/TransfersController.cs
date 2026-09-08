@@ -41,15 +41,7 @@ public sealed class TransfersController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<PagedResult<TransferDto>>> List(
-        [FromQuery] Guid accountId, [FromQuery] int? page, [FromQuery] int? pageSize,
-        CancellationToken cancellationToken)
-    {
-        if (accountId == Guid.Empty)
-            return ValidationProblem(new ValidationProblemDetails
-            {
-                Errors = { ["accountId"] = new[] { "The accountId query parameter is required." } },
-            });
-
-        return Ok(await _transferService.ListAsync(User.GetUserId(), accountId, page, pageSize, cancellationToken));
-    }
+        [FromQuery] Guid? accountId, [FromQuery] int? page, [FromQuery] int? pageSize,
+        CancellationToken cancellationToken) =>
+        Ok(await _transferService.ListAsync(User.GetUserId(), accountId, page, pageSize, cancellationToken));
 }

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { AccountsService } from './accounts.service';
 import { AuthResponse, Credentials } from './models';
 
 interface JwtPayload {
@@ -16,6 +17,7 @@ const TOKEN_STORAGE_KEY = 'meridian.token';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly accountsService = inject(AccountsService);
 
   private readonly tokenSignal = signal<string | null>(this.readStoredToken());
 
@@ -51,10 +53,15 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     this.tokenSignal.set(null);
+    this.accountsService.reset();
     void this.router.navigate(['/login']);
   }
 
   private storeToken(token: string): void {
+    // Clears any leftover state from a previous session before a new one starts.
+    // Covers session teardown paths that don't go through logout() (expired token in
+    // auth.guard, 401 from error.interceptor) — the next login always calls this.
+    this.accountsService.reset();
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
     this.tokenSignal.set(token);
   }

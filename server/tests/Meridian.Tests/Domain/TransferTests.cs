@@ -119,6 +119,34 @@ public class TransferTests
             () => Transfer.Execute(source, destination, amount, null, Now));
     }
 
+    [Theory]
+    [InlineData(10.005)]
+    [InlineData(0.001)]
+    [InlineData(99.999)]
+    public void Execute_AmountWithMoreThanTwoDecimals_Throws_AndLeavesBalancesUntouched(decimal amount)
+    {
+        var source = CreateFunded(500m);
+        var destination = CreateFunded(0m);
+
+        Assert.Throws<InvalidAmountScaleException>(
+            () => Transfer.Execute(source, destination, amount, null, Now));
+
+        Assert.Equal(500m, source.Balance);
+        Assert.Equal(0m, destination.Balance);
+    }
+
+    [Fact]
+    public void Execute_AmountWithExactlyTwoDecimals_IsAccepted()
+    {
+        var source = CreateFunded(500m);
+        var destination = CreateFunded(0m);
+
+        Transfer.Execute(source, destination, 10.99m, null, Now);
+
+        Assert.Equal(489.01m, source.Balance);
+        Assert.Equal(10.99m, destination.Balance);
+    }
+
     [Fact]
     public void Execute_BumpsVersion_OnBothAccounts()
     {

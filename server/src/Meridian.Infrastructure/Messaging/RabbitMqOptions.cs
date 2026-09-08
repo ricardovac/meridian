@@ -9,6 +9,7 @@ public sealed class RabbitMqOptions
     public string UserName { get; init; } = "guest";
     public string Password { get; init; } = "guest";
     public string Exchange { get; init; } = "meridian.events";
+    public int ConfirmTimeoutSeconds { get; init; } = 5;
 }
 
 public sealed class OutboxOptions

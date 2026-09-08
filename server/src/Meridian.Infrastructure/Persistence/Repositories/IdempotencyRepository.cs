@@ -15,4 +15,6 @@ public sealed class IdempotencyRepository : IIdempotencyRepository
             r => r.UserId == userId && r.Key == key, cancellationToken);
 
     public void Add(IdempotencyRecord record) => _context.IdempotencyRecords.Add(record);
+
+    public void Remove(IdempotencyRecord record) => _context.IdempotencyRecords.Remove(record);
 }
