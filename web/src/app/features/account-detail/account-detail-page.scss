@@ -1,0 +1,56 @@
+.account-detail__back {
+  margin-bottom: 16px;
+}
+
+.account-detail__summary {
+  margin-bottom: 24px;
+}
+
+.account-detail__summary-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+
+  h1 {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+  }
+}
+
+.account-detail__meta {
+  margin: 4px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.account-detail__balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.account-detail__balance-label {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.account-detail__balance-value {
+  font: var(--mat-sys-headline-medium);
+  color: var(--mat-sys-primary);
+}
+
+.account-detail__subtitle {
+  margin: 0 0 12px;
+  font: var(--mat-sys-title-medium);
+}
+
+.account-detail__table {
+  width: 100%;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+}

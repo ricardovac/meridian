@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/guard-destructive-db.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "symlinkDirectories": ["web/node_modules"]
+  }
+}

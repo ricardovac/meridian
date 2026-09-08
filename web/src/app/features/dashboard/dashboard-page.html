@@ -1,0 +1,94 @@
+<section class="dashboard">
+  <header class="dashboard__header">
+    <h1>Dashboard</h1>
+    <button matButton="filled" (click)="openNewAccountDialog()">
+      <mat-icon>add</mat-icon>
+      Nova conta
+    </button>
+  </header>
+
+  @if (accountsLoading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (!accountsLoading() && accounts().length === 0) {
+    <p class="empty-state">Nenhuma conta ainda. Crie sua primeira conta para começar.</p>
+  } @else {
+    <div class="dashboard__accounts">
+      @for (account of accounts(); track account.id) {
+        <mat-card appearance="outlined" class="account-card">
+          <mat-card-header>
+            <mat-card-title>{{ account.name }}</mat-card-title>
+            <mat-card-subtitle>{{ account.currency }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="account-card__content">
+            <span class="account-card__label">Saldo</span>
+            <span class="account-card__balance">
+              {{ account.balance | currency: account.currency }}
+            </span>
+          </mat-card-content>
+          <mat-card-actions>
+            <button matButton (click)="openDepositDialog(account)">
+              <mat-icon>add_card</mat-icon>
+              Depositar
+            </button>
+            <a matButton [routerLink]="['/accounts', account.id]">
+              <mat-icon>receipt_long</mat-icon>
+              Extrato
+            </a>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <h2 class="dashboard__subtitle">Transferências recentes</h2>
+
+  @if (transfersLoading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (!transfersLoading() && recentTransfers().length === 0) {
+    <p class="empty-state">Nenhuma transferência ainda.</p>
+  } @else {
+    <table mat-table [dataSource]="recentTransfers()" class="dashboard__table">
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Data</th>
+        <td mat-cell *matCellDef="let transfer">{{ transfer.createdAt | date: 'short' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="source">
+        <th mat-header-cell *matHeaderCellDef>Origem</th>
+        <td mat-cell *matCellDef="let transfer">{{ nameFor(transfer.sourceAccountId) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="destination">
+        <th mat-header-cell *matHeaderCellDef>Destino</th>
+        <td mat-cell *matCellDef="let transfer">{{ nameFor(transfer.destinationAccountId) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Valor</th>
+        <td mat-cell *matCellDef="let transfer">
+          {{ transfer.amount | currency: transfer.currency }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let transfer">
+          <span
+            class="app-chip"
+            [class.app-chip--positive]="transfer.status === 'Completed'"
+            [class.app-chip--negative]="transfer.status === 'Failed'"
+          >
+            {{ transfer.status === 'Completed' ? 'Concluída' : 'Falhou' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="transferColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: transferColumns"></tr>
+    </table>
+  }
+</section>

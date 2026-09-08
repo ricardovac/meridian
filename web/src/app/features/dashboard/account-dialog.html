@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Nova conta</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content class="dialog-form">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" placeholder="Conta corrente" />
+      @if (form.controls.name.hasError('required')) {
+        <mat-error>Informe o nome da conta.</mat-error>
+      } @else if (form.controls.name.hasError('maxlength')) {
+        <mat-error>O nome deve ter no máximo 80 caracteres.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Moeda</mat-label>
+      <mat-select formControlName="currency">
+        @for (currency of currencies; track currency) {
+          <mat-option [value]="currency">{{ currency }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.currency.hasError('required')) {
+        <mat-error>Selecione a moeda.</mat-error>
+      }
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button matButton type="button" mat-dialog-close [disabled]="pending()">Cancelar</button>
+    <button matButton="filled" type="submit" [disabled]="pending()">
+      @if (pending()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Criar conta
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

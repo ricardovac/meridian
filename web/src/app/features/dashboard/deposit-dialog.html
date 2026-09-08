@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Depositar em {{ account.name }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <mat-dialog-content class="dialog-form">
+    <p class="dialog-form__hint">
+      Saldo atual: <strong>{{ account.balance | currency: account.currency }}</strong>
+    </p>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Valor ({{ account.currency }})</mat-label>
+      <input matInput type="number" min="0.01" step="0.01" formControlName="amount" />
+      @if (form.controls.amount.hasError('required')) {
+        <mat-error>Informe o valor do depósito.</mat-error>
+      } @else if (form.controls.amount.hasError('min')) {
+        <mat-error>O valor deve ser maior que zero.</mat-error>
+      }
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button matButton type="button" mat-dialog-close [disabled]="pending()">Cancelar</button>
+    <button matButton="filled" type="submit" [disabled]="pending()">
+      @if (pending()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Depositar
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

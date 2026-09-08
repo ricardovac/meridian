@@ -1,0 +1,89 @@
+<section class="account-detail">
+  <a matButton routerLink="/dashboard" class="account-detail__back">
+    <mat-icon>arrow_back</mat-icon>
+    Voltar ao dashboard
+  </a>
+
+  @if (account(); as acc) {
+    <mat-card appearance="outlined" class="account-detail__summary">
+      <mat-card-content class="account-detail__summary-content">
+        <div>
+          <h1>{{ acc.name }}</h1>
+          <p class="account-detail__meta">
+            {{ acc.currency }} · criada em {{ acc.createdAt | date: 'dd/MM/yyyy' }}
+          </p>
+        </div>
+        <div class="account-detail__balance">
+          <span class="account-detail__balance-label">Saldo</span>
+          <span class="account-detail__balance-value">
+            {{ acc.balance | currency: acc.currency }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <h2 class="account-detail__subtitle">Lançamentos</h2>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (!loading() && entries().length === 0) {
+    <p class="empty-state">Nenhum lançamento ainda.</p>
+  } @else {
+    <table mat-table [dataSource]="entries()" class="account-detail__table">
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef>Data</th>
+        <td mat-cell *matCellDef="let entry">{{ entry.createdAt | date: 'short' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="direction">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let entry">
+          <span
+            class="app-chip"
+            [class.app-chip--negative]="entry.direction === 'Debit'"
+            [class.app-chip--positive]="entry.direction === 'Credit'"
+          >
+            {{ entry.direction === 'Debit' ? 'Débito' : 'Crédito' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Valor</th>
+        <td
+          mat-cell
+          *matCellDef="let entry"
+          [class.amount--debit]="entry.direction === 'Debit'"
+          [class.amount--credit]="entry.direction === 'Credit'"
+        >
+          {{
+            (entry.direction === 'Debit' ? -entry.amount : entry.amount)
+              | currency: account()?.currency
+          }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="balanceAfter">
+        <th mat-header-cell *matHeaderCellDef>Saldo após</th>
+        <td mat-cell *matCellDef="let entry">
+          {{ entry.balanceAfter | currency: account()?.currency }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="entryColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: entryColumns"></tr>
+    </table>
+
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="onPage($event)"
+      aria-label="Selecionar página de lançamentos"
+    />
+  }
+</section>

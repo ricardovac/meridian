@@ -1,0 +1,77 @@
+<section class="transfer">
+  <h1>Nova transferência</h1>
+
+  <mat-card appearance="outlined" class="transfer__card">
+    <mat-card-content>
+      <form class="transfer__form" [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Conta de origem</mat-label>
+          <mat-select formControlName="sourceAccountId">
+            @for (account of accounts(); track account.id) {
+              <mat-option [value]="account.id">
+                {{ account.name }} — {{ account.balance | currency: account.currency }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (form.controls.sourceAccountId.hasError('required')) {
+            <mat-error>Selecione a conta de origem.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Conta de destino (ID)</mat-label>
+          <input
+            matInput
+            formControlName="destinationAccountId"
+            placeholder="00000000-0000-0000-0000-000000000000"
+          />
+          @if (form.controls.destinationAccountId.hasError('required')) {
+            <mat-error>Informe o ID da conta de destino.</mat-error>
+          } @else if (form.controls.destinationAccountId.hasError('pattern')) {
+            <mat-error>Informe um UUID válido.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (form.hasError('sameAccount') && form.controls.destinationAccountId.touched) {
+          <p class="transfer__inline-error">
+            <mat-icon inline>error_outline</mat-icon>
+            A conta de destino deve ser diferente da conta de origem.
+          </p>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>Valor</mat-label>
+          <input matInput type="number" min="0.01" step="0.01" formControlName="amount" />
+          @if (form.controls.amount.hasError('required')) {
+            <mat-error>Informe o valor da transferência.</mat-error>
+          } @else if (form.controls.amount.hasError('min')) {
+            <mat-error>O valor deve ser maior que zero.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Descrição</mat-label>
+          <input matInput formControlName="description" placeholder="Pagamento de aluguel" />
+          @if (form.controls.description.hasError('maxlength')) {
+            <mat-error>A descrição deve ter no máximo 200 caracteres.</mat-error>
+          }
+        </mat-form-field>
+
+        @if (insufficientFundsError(); as message) {
+          <p class="transfer__inline-error" role="alert">
+            <mat-icon inline>error_outline</mat-icon>
+            {{ message }}
+          </p>
+        }
+
+        <button matButton="filled" type="submit" [disabled]="pending()">
+          @if (pending()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Transferir
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</section>

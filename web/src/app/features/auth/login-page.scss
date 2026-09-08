@@ -1,0 +1,42 @@
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 16px;
+  background: var(--mat-sys-surface-container);
+}
+
+.login__card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.login__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 16px;
+}
+
+.login__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mat-sys-primary);
+  font: var(--mat-sys-title-medium);
+  margin-bottom: 8px;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  button[type='submit'] {
+    margin-top: 8px;
+  }
+}
+
+.login__actions {
+  justify-content: center;
+}

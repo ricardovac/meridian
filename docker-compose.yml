@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: meridian
+      POSTGRES_PASSWORD: meridian
+      POSTGRES_DB: meridian
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meridian"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: meridian
+      RABBITMQ_DEFAULT_PASS: meridian
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./server
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=meridian;Username=meridian;Password=meridian
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: meridian
+      RabbitMq__Password: meridian
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
