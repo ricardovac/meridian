@@ -40,7 +40,10 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
                     routingKey: ToRoutingKey(eventType),
                     basicProperties: properties,
                     body: Encoding.UTF8.GetBytes(payload));
-                return true;
+
+                var acknowledged = channel.WaitForConfirms(
+                    TimeSpan.FromSeconds(_options.ConfirmTimeoutSeconds), out var timedOut);
+                return acknowledged && !timedOut;
             }
             catch (Exception ex)
             {
@@ -70,6 +73,7 @@ public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 
         _connection = factory.CreateConnection("meridian-outbox");
         _channel = _connection.CreateModel();
+        _channel.ConfirmSelect();
         _channel.ExchangeDeclare(_options.Exchange, ExchangeType.Topic, durable: true);
         return _channel;
     }
