@@ -31,7 +31,10 @@ public class MeridianDbContext : DbContext
             account.Property(a => a.Currency).HasMaxLength(3).IsRequired();
             account.Property(a => a.Balance).HasPrecision(18, 2);
             account.HasIndex(a => a.OwnerUserId);
-            account.HasIndex(a => new { a.IsSystem, a.Currency });
+            account.HasIndex(a => a.Currency)
+                .IsUnique()
+                .HasDatabaseName("IX_Accounts_Currency_IsSystem")
+                .HasFilter("\"IsSystem\" = TRUE");
         });
 
         modelBuilder.Entity<Transfer>(transfer =>
@@ -68,7 +71,7 @@ public class MeridianDbContext : DbContext
             record.HasKey(r => r.Id);
             record.Property(r => r.Key).HasMaxLength(200).IsRequired();
             record.Property(r => r.RequestHash).HasMaxLength(64).IsRequired();
-            record.Property(r => r.ResponseBody).IsRequired();
+            record.Ignore(r => r.IsCompleted);
             record.HasIndex(r => new { r.UserId, r.Key }).IsUnique();
         });
     }

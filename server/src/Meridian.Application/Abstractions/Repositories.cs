@@ -40,4 +40,5 @@ public interface IIdempotencyRepository
 {
     Task<IdempotencyRecord?> FindAsync(Guid userId, string key, CancellationToken cancellationToken = default);
     void Add(IdempotencyRecord record);
+    void Remove(IdempotencyRecord record);
 }
