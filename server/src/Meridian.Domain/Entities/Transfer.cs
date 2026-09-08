@@ -26,6 +26,9 @@ public class Transfer
         if (amount <= 0m)
             throw new DomainValidationException("Transfer amount must be greater than zero.");
 
+        if (amount != decimal.Round(amount, 2))
+            throw new InvalidAmountScaleException(amount);
+
         if (source.Id == destination.Id)
             throw new DomainValidationException("Source and destination accounts must differ.");
 

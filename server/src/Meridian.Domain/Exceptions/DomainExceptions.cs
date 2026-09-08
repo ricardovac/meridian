@@ -32,3 +32,11 @@ public sealed class CurrencyMismatchException : DomainException
     {
     }
 }
+
+public sealed class InvalidAmountScaleException : DomainException
+{
+    public InvalidAmountScaleException(decimal amount)
+        : base($"Amount {amount} has more than 2 decimal places; the ledger does not round monetary values.")
+    {
+    }
+}
